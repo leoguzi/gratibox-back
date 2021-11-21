@@ -12,7 +12,7 @@ async function validateSession(req, res, next) {
     if (result.rowCount === 0) {
       return res.status(401).send({ message: 'Not logged in!' });
     }
-    req.userId = result.rows[0].id_user;
+    req.idUser = result.rows[0].id_user;
     next();
   } catch (error) {
     console.log(error);

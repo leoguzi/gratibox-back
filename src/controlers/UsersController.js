@@ -51,17 +51,29 @@ async function logIn(req, res) {
         `SELECT * FROM signatures WHERE id_user = $1`,
         [user.id]
       );
-      const userInfo = {
+
+      const signatureDeliveries = signature.rows[0];
+      if (signatureDeliveries.is_monthly) {
+        signatureDeliveries.signatureType = 'monthly';
+      } else {
+        signatureDeliveries.signatureType = 'weekly';
+      }
+      delete signatureDeliveries.id;
+      delete signatureDeliveries.is_monthly;
+      delete signatureDeliveries.is_weekly;
+      signatureDeliveries.nextDeliveries = [];
+      const date = signatureDeliveries.start_date;
+      console.log(new Date(date.setMonth(date.getMonth() + 2)));
+      let userInfo = {
         name: user.name,
         token,
-        signatureInfo: {},
+        signatureInfo: null,
       };
+
       if (signature.rowCount > 0) {
-        const userInfo = {
+        userInfo = {
           ...userInfo,
-          signatureInfo: {
-            ...signature.rows[0],
-          },
+          signatureInfo: signatureDeliveries,
         };
       }
 
