@@ -129,7 +129,7 @@ function calcNextDeliveries(is_monthly, is_weekly, deliveryDay) {
       deliveryDay = 3;
     }
     if (deliveryDay === 'friday') {
-      deliveryDay = 6;
+      deliveryDay = 5;
     }
     while (nextDeliveries.length < 3) {
       if (today.getDay() === deliveryDay) {

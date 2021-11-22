@@ -23,6 +23,7 @@ async function registerUser(req, res) {
       'INSERT INTO users (name, email, password) VALUES ($1, $2, $3);',
       [name, email.toLowerCase(), encriptedPassword]
     );
+
     return res.status(201).send({ message: 'Created!' });
   } catch (error) {
     console.log(error);
