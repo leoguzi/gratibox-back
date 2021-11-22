@@ -8,7 +8,7 @@ const signatureSchema = joi.object({
   organicProducts: joi.boolean().required(),
   incense: joi.boolean().required(),
   address: joi.string().required(),
-  cep: joi.number().min(10000000).max(99999999),
+  cep: joi.string().min(8).max(8),
   city: joi.string().required(),
   state: joi.string().min(2).max(2).required(),
 });
