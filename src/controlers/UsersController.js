@@ -2,6 +2,7 @@ import { v4 as uuid } from 'uuid';
 import bcrypt from 'bcrypt';
 import connection from '../database.js';
 import userSchema from '../schemas/userSchema.js';
+import { format } from 'date-fns';
 
 async function registerUser(req, res) {
   if (userSchema.validate(req.body).error) {
@@ -51,29 +52,28 @@ async function logIn(req, res) {
         `SELECT * FROM signatures WHERE id_user = $1`,
         [user.id]
       );
-
-      const signatureDeliveries = signature.rows[0];
-      if (signatureDeliveries.is_monthly) {
-        signatureDeliveries.signatureType = 'monthly';
-      } else {
-        signatureDeliveries.signatureType = 'weekly';
-      }
-      delete signatureDeliveries.id;
-      delete signatureDeliveries.is_monthly;
-      delete signatureDeliveries.is_weekly;
-      signatureDeliveries.nextDeliveries = [];
-      const date = signatureDeliveries.start_date;
-      console.log(new Date(date.setMonth(date.getMonth() + 2)));
       let userInfo = {
         name: user.name,
         token,
-        signatureInfo: null,
+        signatureInfo: {},
       };
-
+      let signatureDeliveries = {};
       if (signature.rowCount > 0) {
+        signatureDeliveries = signature.rows[0];
+        signatureDeliveries.nextDeliveries = calcNextDeliveries(
+          signatureDeliveries.is_monthly,
+          signatureDeliveries.is_weekly,
+          signatureDeliveries.delivery_day
+        );
         userInfo = {
           ...userInfo,
-          signatureInfo: signatureDeliveries,
+          signatureInfo: {
+            startDate: format(signatureDeliveries.start_date, 'dd/MM/yyyy'),
+            tea: signatureDeliveries.tea,
+            organicProducts: signatureDeliveries.organic_products,
+            incense: signatureDeliveries.incense,
+            nextDeliveries: signatureDeliveries.nextDeliveries,
+          },
         };
       }
 
@@ -101,6 +101,49 @@ async function logOut(req, res) {
     console.log(error);
     return res.sendStatus(500);
   }
+}
+
+function calcNextDeliveries(is_monthly, is_weekly, deliveryDay) {
+  const nextDeliveries = [];
+  let today = new Date();
+  if (is_monthly) {
+    deliveryDay = Number((deliveryDay = deliveryDay.replace('day ', '')));
+    console.log(deliveryDay);
+    while (nextDeliveries.length < 3) {
+      if (today.getDate() === deliveryDay) {
+        if (today.getDay() === 6) {
+          today = new Date(today.setDate(today.getDate() + 2));
+        }
+        if (today.getDay() === 0) {
+          today = new Date(today.setDate(today.getDate() + 1));
+        }
+        nextDeliveries.push(format(today, 'dd/MM/yyyy'));
+        today = new Date(today.setDate(today.getDate() + 1));
+      } else {
+        today = new Date(today.setDate(today.getDate() + 1));
+      }
+    }
+  }
+  if (is_weekly) {
+    if (deliveryDay === 'monday') {
+      deliveryDay = 1;
+    }
+    if (deliveryDay === 'wednesday') {
+      deliveryDay = 3;
+    }
+    if (deliveryDay === 'friday') {
+      deliveryDay = 6;
+    }
+    while (nextDeliveries.length < 3) {
+      if (today.getDay() === deliveryDay) {
+        nextDeliveries.push(format(today, 'dd/MM/yyyy'));
+        today = new Date(today.setDate(today.getDate() + 1));
+      } else {
+        today = new Date(today.setDate(today.getDate() + 1));
+      }
+    }
+  }
+  return nextDeliveries;
 }
 
 export { registerUser, logIn, logOut };
