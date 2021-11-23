@@ -52,7 +52,7 @@ async function registerSignature(req, res) {
       [signature.rows[0].id, address, cep, city, state, name]
     );
 
-    return res.sendStatus(201);
+    return res.status(201).send({ message: 'Created!' });
   } catch (error) {
     console.log(error);
     return res.sendStatus(500);

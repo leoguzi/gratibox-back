@@ -1,7 +1,7 @@
 import connection from '../database.js';
 async function validateSession(req, res, next) {
   if (!req.headers.authorization) {
-    return res.status(401).send({ message: 'Not logged in!' });
+    return res.status(400).send({ message: 'Invalid request!' });
   }
   try {
     const token = req.headers.authorization.replace('Bearer ', '');
